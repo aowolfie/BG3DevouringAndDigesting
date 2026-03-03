@@ -125,7 +125,7 @@ function SP_CanFitItem(pred, item)
     if predRoom > itemData then
         return true
     else
-        _P("Can't fit " .. item " inside " .. pred)
+        _P("Can't fit " .. item .. " inside " .. pred)
         return false
     end
 end

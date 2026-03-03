@@ -823,6 +823,18 @@ function SP_VoreCheck(pred, prey, eventName)
         if Osi.HasPassive(prey, 'SP_EscapeArtist') == 1 then
             preyAdvantage = 1
         end
+
+        -- Size bonus: larger pred has advantage keeping prey in, smaller prey has harder time escaping
+        local predSize = SP_GetCharacterSize(pred)
+        local preySize = SP_GetCharacterSize(prey)
+        if predSize > preySize then
+            -- pred is larger: pred gets advantage on the check (harder for prey to escape)
+            advantage = 1
+        elseif preySize > predSize then
+            -- prey is larger: prey gets advantage on escape attempt
+            preyAdvantage = 1
+        end
+
         Osi.RequestPassiveRollVersusSkill(prey, pred, "SkillCheck", "Strength", "Constitution", preyAdvantage, advantage,
                                           eventName)
     elseif eventName == 'ReleaseMeCheck' then
@@ -832,6 +844,16 @@ function SP_VoreCheck(pred, prey, eventName)
         if VoreData[prey].Digestion == DType.Lethal then
             checkDC = checkDC + 5
         end
+
+        -- Size bonus: larger prey finds it easier to persuade release, smaller prey has harder time
+        local predSize = SP_GetCharacterSize(pred)
+        local preySize = SP_GetCharacterSize(prey)
+        if preySize > predSize then
+            checkDC = math.max(checkDC - 5, 1)
+        elseif predSize > preySize then
+            checkDC = checkDC + 5
+        end
+
         Osi.RequestPassiveRoll(prey, pred, "SkillCheck", "Persuasion", DCTable[checkDC], preyAdvantage, eventName)
         -- Osi.RequestPassiveRollVersusSkill(pred, prey, "SkillCheck", "Wisdom", "Charisma", advantage, preyAdvantage,
         --                                   eventName)
@@ -1074,6 +1096,16 @@ function SP_SlowDigestion(weightDiff, fatDiff)
         if SP_MCMGet("BoilingInsidesFast") and Osi.HasPassive(v.Pred, "SP_BoilingInsides") == 1 and v.Digestion ~= DType.Endo then
             thisDiff = thisDiff * 2
         end
+        -- Size bonus: larger preds digest smaller prey faster on rest
+        if v.Pred ~= "" and v.Digestion == DType.Dead then
+            local predSize = SP_GetCharacterSize(v.Pred)
+            local preySize = SP_GetCharacterSize(k)
+            if predSize > preySize then
+                thisDiff = thisDiff * (1 + (predSize - preySize))
+            elseif preySize > predSize and thisDiff > 0 then
+                thisDiff = math.max(1, thisDiff // (1 + (preySize - predSize)))
+            end
+        end
         -- reformation
         if v.Digestion == DType.Dead and Osi.HasActiveStatus(k, "SP_ReformationStatus") == 1 then
             thisDiff = math.min(v.FixedWeight - thisDiff, thisDiff)
@@ -1216,12 +1248,23 @@ function SP_FastDigestion(pred, allPrey, force)
     if Osi.HasPassive(pred, "SP_BoilingInsides") == 1 then
         force = force * 2
     end
+    local predSize = SP_GetCharacterSize(pred)
     local autoAbsorbList = {}
     for prey, locus in pairs(allPrey) do
         if VoreData[prey] ~= nil then
+            -- Size bonus: larger preds digest smaller prey faster
+            local preySize = SP_GetCharacterSize(prey)
+            local sizeForce = force
+            if predSize > preySize then
+                -- each size category difference doubles the digestion rate
+                sizeForce = force * (1 + (predSize - preySize))
+            elseif preySize > predSize and force > 0 then
+                -- larger prey is harder to digest, halved per size category
+                sizeForce = math.max(1, force // (1 + (preySize - predSize)))
+            end
             local preyWeightDiff = 0
             if VoreData[prey].Digestion == DType.Dead and Osi.HasActiveStatus(prey, "SP_ReformationStatus") == 1 then
-                preyWeightDiff = math.min(VoreData[prey].FixedWeight - force, force)
+                preyWeightDiff = math.min(VoreData[prey].FixedWeight - sizeForce, sizeForce)
                 -- remembers all characters whose weight we need to update
                 SP_ReduceWeightRecursive(prey, -preyWeightDiff, false, true)
                 _P("Reformation: " .. preyWeightDiff)
@@ -1232,11 +1275,11 @@ function SP_FastDigestion(pred, allPrey, force)
                 end
             elseif VoreData[prey].Digestion == DType.Dead then
 
-                -- if force is 0 we fully digest the prey
+                -- if force is 0 we fully digest the prey (e.g. Churn spell)
                 if force == 0 then
                     preyWeightDiff = VoreData[prey].Weight - VoreData[prey].FixedWeight // 5
                 else
-                    preyWeightDiff = math.min(VoreData[prey].Weight - VoreData[prey].FixedWeight // 5, force)
+                    preyWeightDiff = math.min(VoreData[prey].Weight - VoreData[prey].FixedWeight // 5, sizeForce)
                 end
                 if SP_MCMGet("WeightGain") then
                     VoreData[pred].Fat = VoreData[pred].Fat +

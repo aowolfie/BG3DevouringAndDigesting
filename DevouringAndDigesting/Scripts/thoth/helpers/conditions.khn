@@ -44,6 +44,18 @@ function SP_CanVore()
     return ((Character() & ~Dead() | Item()) & IsMovable()) & ~Self() & CanShoveWeight() & ~Grounded() & ~Tagged('GASEOUS_FORM') & ~Tagged('CANT_SHOVE_THROW') & ~Tagged('Inedible')
 end
 
+--- Returns a numeric size value for an entity based on size tags.
+--- Tiny=0, Small=1, Medium=2, Large=3, Huge=4, Gargantuan=5
+function SP_GetSizeValue(entity)
+    if Tagged('YOURSIZE_GARGANTUAN', entity).Result then return 5
+    elseif Tagged('YOURSIZE_HUGE', entity).Result then return 4
+    elseif Tagged('YOURSIZE_LARGE', entity).Result then return 3
+    elseif Tagged('YOURSIZE_SMALL', entity).Result then return 1
+    elseif Tagged('YOURSIZE_TINY', entity).Result then return 0
+    end
+    return 2 -- default Medium
+end
+
 function SwallowCheck(lethal)
     local pred = context.Source
     local prey = context.Target
@@ -54,6 +66,15 @@ function SwallowCheck(lethal)
 
         local adv = IsSneakingOrInvisible() | HasPassive('SP_StretchyMaw', pred) | HasStatus('SP_RavenousStatus', pred) | HasStatus('SP_Tasty', prey) | IsCrowdControlled(prey)
         local disadv = HasEvasion() | HasStatus('SP_Disgusting', prey) | SP_IsActivePred(prey)
+
+        -- Size bonus: larger preds have advantage eating smaller prey, and vice versa
+        local predSize = SP_GetSizeValue(pred)
+        local preySize = SP_GetSizeValue(prey)
+        if predSize > preySize then
+            adv = adv | ConditionResult(true)
+        elseif preySize > predSize then
+            disadv = disadv | ConditionResult(true)
+        end
 
         local preySkill = math.max(prey.GetPassiveSkill(Skill.Athletics),prey.GetPassiveSkill(Skill.Acrobatics))
 
