@@ -391,10 +391,22 @@ function SP_OnRollResults(eventName, roller, rollSubject, resultType, isActiveRo
         
         if Osi.HasPassive(rollSubject, "SP_SC_EldritchPrison") == 0 and SP_MCMGet("IndigestionLimit") ~= 0 then
             Osi.ApplyStatus(rollSubject, "SP_Indigestion", 1 * SecondsPerTurn)
-        
-            if Osi.GetStatusTurns(rollSubject, "SP_Indigestion") >= SP_MCMGet("IndigestionLimit") then
+
+            -- Size bonus: larger preds can hold down more indigestion before forced regurgitation
+            local indigestionLimit = SP_MCMGet("IndigestionLimit")
+            local predSize = SP_GetCharacterSize(rollSubject)
+            local preySize = SP_GetCharacterSize(roller)
+            if predSize > preySize then
+                -- each size category the pred is larger adds +1 to the indigestion limit
+                indigestionLimit = indigestionLimit + (predSize - preySize)
+            elseif preySize > predSize then
+                -- larger prey causes more indigestion, reducing the limit (min 1)
+                indigestionLimit = math.max(1, indigestionLimit - (preySize - predSize))
+            end
+
+            if Osi.GetStatusTurns(rollSubject, "SP_Indigestion") >= indigestionLimit then
                 Osi.RemoveStatus(rollSubject, "SP_Indigestion")
-                -- evey prey will be regurgitated
+                -- every prey will be regurgitated
                 SP_RegurgitatePrey(rollSubject, "All", 0, "", VoreData[roller].Locus)
                 -- preds will not try to vore anyone after forced regurgitation
                 Osi.ApplyStatus(rollSubject, "SP_AI_HELPER_BLOCKVORE", SecondsPerTurn * 10, 1, rollSubject)
