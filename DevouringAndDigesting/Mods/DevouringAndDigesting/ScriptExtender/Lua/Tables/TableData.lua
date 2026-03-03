@@ -49,6 +49,12 @@ GurgleSounds = {
     "SHA_SpiderMeatHunk_StomachGurgle_B",
 }
 
+-- List of fart sounds randomly played when bowels have contents
+FartSounds = {
+    "SHA_SpiderMeatHunk_StomachGurgle_A",
+    "SHA_SpiderMeatHunk_StomachGurgle_B",
+}
+
 -- ApplyStatus applies statuses for a number of seconds instead of turns.
 -- Multiply the duration by this.
 SecondsPerTurn = 6
@@ -85,6 +91,7 @@ ComplexCustomSpells = false
 ---@field SpellTargets table<CHARACTER, string> table of prey this character has cast a vore-related spell on. Used for multi-stage spells
 ---@field SwallowedStatus string what swallowed status is appled (prey only)
 ---@field DigestionStatus string what digestion status is appled (prey only)
+---@field Waste integer accumulated waste from fully digested prey (pred only)
 VoreDataEntry = {
     Pred = "",
     Weight = 0,
@@ -106,4 +113,5 @@ VoreDataEntry = {
     SpellTargets = {},
     SwallowedStatus = "",
     DigestionStatus = "",
+    Waste = 0,
 }

@@ -170,6 +170,12 @@ data "StatusType" "BOOST"
 data "StatusPropertyFlags" "DisablePortraitIndicator;DisableCombatlog"
 data "OnApplyFunctors" "DealDamage(10d6,Acid);DealDamage(10d6,Bludgeoning)"
 
+new entry "SP_ClenchStatus"
+type "StatusData"
+data "StatusType" "BOOST"
+data "StatusPropertyFlags" "DisablePortraitIndicator;DisableCombatlog"
+data "OnApplyFunctors" "DealDamage(10d6,Acid);DealDamage(10d6,Bludgeoning)"
+
 new entry "SP_ReformationStatus"
 type "StatusData"
 data "StatusType" "BOOST"

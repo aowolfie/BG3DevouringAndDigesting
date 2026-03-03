@@ -86,6 +86,26 @@
                     "Description": "If true, you lose weight immediately upon finishing digestion, and you will be immediately able to absorb / dispose of prey",
                     "Type": "checkbox",
                     "Handles": {"NameHandle":"h28d75044g9810g476egad69g5765d4664965","DescriptionHandle":"he064dd60g18f4g45e6ga6edg27180c74d21b"}
+                },
+                {
+                    "Id": "DisposalPile",
+                    "Name": "Disposal Pile",
+                    "Default": false,
+                    "Description": "When absorbing a fully digested prey, a disposal pile is spawned behind the pred. The number of piles scales with the prey's original weight (1 per 25 kg).",
+                    "Type": "checkbox",
+                    "Handles": {"NameHandle":"h3a9f7c2eg1d4bg4e5fg6a8bg7c9d0e1f2a3b","DescriptionHandle":"h4b0a8d3fg2e5cg4f6ag7b9cg8d0e1f2a3b4c"}
+                },
+                {
+                    "Id": "WasteThreshold",
+                    "Name": "Bowels Waste Threshold",
+                    "Default": 50,
+                    "Description": "Amount of waste at which bowels automatically switch to lethal digestion. When waste drops below this threshold (via disposal), bowels switch back to endo. Set to 0 to disable.",
+                    "Type": "slider_int",
+                    "Options": {
+                        "Min": 0,
+                        "Max": 500
+                    },
+                    "Handles": {"NameHandle":"h5c1d2e3fg4a5bg6c7dg8e9fg0a1b2c3d4e5f","DescriptionHandle":"h6d2e3f4ag5b6cg7d8eg9f0ag1b2c3d4e5f6a"}
                 }
             ],
             "VisibleIf": {
@@ -517,6 +537,18 @@
                     "Handles": {"NameHandle":"hc42a1cc4g0f53g4c6ag8039g588c4746ca5f","DescriptionHandle":"h4e78058fge597g4483g8df2g659cf3bd9292"}
                 },
                 {
+                    "Id": "FartProbability",
+                    "Name": "Fart Probability",
+                    "Default": 5,
+                    "Description": "The % chance of a fart being played every 6 seconds (a turn) when bowels have contents. Set to 0 to disable.",
+                    "Type": "slider_int",
+                    "Options": {
+                        "Min": 0,
+                        "Max": 100
+                    },
+                    "Handles": {"NameHandle":"he1f2a3b4gc5d6g7e8fg9a0bg1c2d3e4f5a6b","DescriptionHandle":"hf2a3b4c5gd6e7g8f9ag0b1cg2d3e4f5a6b7c"}
+                },
+                {
                     "Id": "rReloadBellyConfig",
                     "Name": "Reload Belly Config",
                     "Default": false,
@@ -634,6 +666,17 @@
                         "Conditions": [{"SettingId": "ShowWIP", "ExpectedValue": "true", "Operator": "=="}]
                     },
                     "Handles": {"NameHandle":"h043674ecg0be8g4582g88f7g18ba9a6627cf","DescriptionHandle":"hc80f837cgf6cdg48f5gaf21gee0e67ec64b9"}
+                },
+                {
+                    "Id": "RarityDigestion",
+                    "Name": "Rarity-Based Item Digestion",
+                    "Default": true,
+                    "Description": "When enabled, item digestion chance is based on rarity. Common items are easily digested (~33%), Uncommon (~17%), Rare (~10%), Epic (~5%), Legendary (~2%). When disabled, all items have a flat 10% chance per tick.",
+                    "Type": "checkbox",
+                    "VisibleIf": {
+                        "Conditions": [{"SettingId": "ShowWIP", "ExpectedValue": "true", "Operator": "=="}]
+                    },
+                    "Handles": {"NameHandle":"h7a3b4c5dge8f9g0a1bg2c3dg4e5f6a7b8c9d","DescriptionHandle":"h8b4c5d6eg9f0ag1b2cg3d4eg5f6a7b8c9d0e"}
                 },
                 {
                     "Id": "WeightGain",

@@ -23,7 +23,7 @@ function SP_VoreDataEntry(character, create)
         SP_NewVoreDataEntry(character)
     elseif VoreData[character].Pred == "" and next(VoreData[character].Prey) == nil and VoreData[character].Items == ""
         and VoreData[character].Fat == 0 and VoreData[character].AddWeight == 0 and VoreData[character].Satiation == 0 and
-        next(VoreData[character].SpellTargets) == nil and not create then
+        next(VoreData[character].SpellTargets) == nil and VoreData[character].Waste == 0 and not create then
         _P("Removing character " .. character)
         VoreData[character] = nil
     end
@@ -464,6 +464,36 @@ function SP_SwallowAllItems(pred, container)
     end
 end
 
+---Returns the digestion chance (out of 10) for an item based on its rarity.
+---Common items are most likely to be digested, legendary items almost never.
+---@param uuid GUIDSTRING
+---@return integer chance out of 10 (higher = more likely to survive)
+function SP_GetItemDigestionRoll(uuid)
+    if not SP_MCMGet("RarityDigestion") then
+        return 10 -- flat 1/10 chance when rarity-based digestion is off
+    end
+    local itemEntity = Ext.Entity.Get(uuid)
+    local rarity = 0
+    if itemEntity.Value ~= nil then
+        rarity = itemEntity.Value.Rarity or 0
+    end
+    -- ItemDataRarity: Common=0, Unique=1, Uncommon=2, Rare=3, Epic=4, Legendary=5, Divine=6, Sentinel=7
+    -- Lower roll target = easier to digest (1/N chance, item digested when Random(N)==1)
+    if rarity <= 0 then
+        return 3      -- Common: 1/3 chance (~33%)
+    elseif rarity == 2 then
+        return 6      -- Uncommon: 1/6 chance (~17%)
+    elseif rarity == 3 then
+        return 10     -- Rare: 1/10 chance (10%)
+    elseif rarity == 4 then
+        return 20     -- Epic: 1/20 chance (5%)
+    elseif rarity >= 5 then
+        return 50     -- Legendary/Divine: 1/50 chance (2%)
+    else
+        return 10     -- Unique/Sentinel/other: 1/10 default
+    end
+end
+
 ---digests a random item in pred's inventory
 ---@param pred CHARACTER
 function SP_DigestItem(pred)
@@ -483,6 +513,11 @@ function SP_DigestItem(pred)
         i = i + 1
         if Osi.IsStoryItem(uuid) == 0 and Osi.IsTagged(uuid, '983087c8-c9d3-4a87-bc69-65f9329666c8') == 0 and
             Osi.IsTagged(uuid, '7b96246c-54ba-43ea-b01d-4e0b20ad35f1') == 0 then
+            -- Rarity-based digestion: rarer items are harder to digest
+            local rollTarget = SP_GetItemDigestionRoll(uuid)
+            if Osi.Random(rollTarget) ~= 1 then
+                return -- item survived this tick
+            end
             _P("item" .. uuid)
             if Osi.IsConsumable(uuid) == 1 then
                 Osi.Use(pred, uuid, "")
@@ -665,6 +700,25 @@ function SP_RegurgitatePrey(pred, preyString, preyState, spell, locus)
                 end
             end
             Osi.TeleportToPosition(prey, 100000, 0, 100000, "", 0, 0, 0, 1, 1)
+
+            -- Spawn disposal pile based on prey's original weight
+            if SP_MCMGet("DisposalPile") then
+                local pileWeight = VoreData[prey].FixedWeight
+                if pileWeight > 0 then
+                    local predX, predY, predZ = Osi.GetPosition(pred)
+                    local predXRotation, predYRotation, predZRotation = Osi.GetRotation(pred)
+                    -- Place pile behind the pred
+                    predYRotation = (predYRotation + 180) * math.pi / 180
+                    local pileX = predX + SP_MCMGet("RegurgitationDistance") * math.cos(predYRotation)
+                    local pileZ = predZ + SP_MCMGet("RegurgitationDistance") * math.sin(predYRotation)
+                    -- Scale quantity: 1 pile per 25 kg of original prey weight, minimum 1
+                    local pileCount = math.max(1, pileWeight // 25)
+                    for i = 1, pileCount do
+                        Osi.CreateAt('d15b0a7e-3c2f-4e8a-9d6b-1a2f3e4d5c6b', pileX, predY, pileZ, 1, 0, "")
+                    end
+                    _P("Spawned " .. pileCount .. " disposal pile(s) for prey weight " .. pileWeight)
+                end
+            end
         else
             local predX, predY, predZ = Osi.GetPosition(pred)
             local predXRotation, predYRotation, predZRotation = Osi.GetRotation(pred)
@@ -804,6 +858,18 @@ function SP_VoreCheck(pred, prey, eventName)
         if Osi.HasPassive(prey, 'SP_EscapeArtist') == 1 then
             preyAdvantage = 1
         end
+
+        -- Size bonus: larger pred has advantage keeping prey in, smaller prey has harder time escaping
+        local predSize = SP_GetCharacterSize(pred)
+        local preySize = SP_GetCharacterSize(prey)
+        if predSize > preySize then
+            -- pred is larger: pred gets advantage on the check (harder for prey to escape)
+            advantage = 1
+        elseif preySize > predSize then
+            -- prey is larger: prey gets advantage on escape attempt
+            preyAdvantage = 1
+        end
+
         Osi.RequestPassiveRollVersusSkill(prey, pred, "SkillCheck", "Strength", "Constitution", preyAdvantage, advantage,
                                           eventName)
     elseif eventName == 'ReleaseMeCheck' then
@@ -813,6 +879,16 @@ function SP_VoreCheck(pred, prey, eventName)
         if VoreData[prey].Digestion == DType.Lethal then
             checkDC = checkDC + 5
         end
+
+        -- Size bonus: larger prey finds it easier to persuade release, smaller prey has harder time
+        local predSize = SP_GetCharacterSize(pred)
+        local preySize = SP_GetCharacterSize(prey)
+        if preySize > predSize then
+            checkDC = math.max(checkDC - 5, 1)
+        elseif predSize > preySize then
+            checkDC = checkDC + 5
+        end
+
         Osi.RequestPassiveRoll(prey, pred, "SkillCheck", "Persuasion", DCTable[checkDC], preyAdvantage, eventName)
         -- Osi.RequestPassiveRollVersusSkill(pred, prey, "SkillCheck", "Wisdom", "Charisma", advantage, preyAdvantage,
         --                                   eventName)
@@ -867,6 +943,12 @@ function SP_CalculateWeightReduction(pred, prey, digestionType)
     end
     if Osi.HasActiveStatus(pred, "SP_Unburdened") == 1 then
         capacityMulti = capacityMulti + 1/3
+    end
+    -- Size bonus: larger preds have more room for smaller prey
+    local predSize = SP_GetCharacterSize(pred)
+    local preySize = SP_GetCharacterSize(prey)
+    if predSize > preySize then
+        capacityMulti = capacityMulti + (predSize - preySize) * 0.5
     end
     if Osi.HasPassive(prey, 'SP_Dense') == 1 and digestionType == DType.Lethal then
         preyWeight = preyWeight * 2
@@ -1049,10 +1131,21 @@ function SP_SlowDigestion(weightDiff, fatDiff)
     end
 
     -- reduces prey weight
+    local slowAutoAbsorb = {}
     for k, v in pairs(VoreData) do
         local thisDiff = weightDiff
         if SP_MCMGet("BoilingInsidesFast") and Osi.HasPassive(v.Pred, "SP_BoilingInsides") == 1 and v.Digestion ~= DType.Endo then
             thisDiff = thisDiff * 2
+        end
+        -- Size bonus: larger preds digest smaller prey faster on rest
+        if v.Pred ~= "" and v.Digestion == DType.Dead then
+            local predSize = SP_GetCharacterSize(v.Pred)
+            local preySize = SP_GetCharacterSize(k)
+            if predSize > preySize then
+                thisDiff = thisDiff * (1 + (predSize - preySize))
+            elseif preySize > predSize and thisDiff > 0 then
+                thisDiff = math.max(1, thisDiff // (1 + (preySize - predSize)))
+            end
         end
         -- reformation
         if v.Digestion == DType.Dead and Osi.HasActiveStatus(k, "SP_ReformationStatus") == 1 then
@@ -1083,12 +1176,25 @@ function SP_SlowDigestion(weightDiff, fatDiff)
                     thisDiff * SP_MCMGet("HungerSatiationRate") / 100
             end
             SP_ReduceWeightRecursive(k, thisDiff, false, true)
+
+            -- Passive auto-absorb: if prey weight has reached minimum, queue for absorption
+            if v.Weight <= v.FixedWeight // 5 and v.Pred ~= "" then
+                table.insert(slowAutoAbsorb, {pred = v.Pred, prey = k})
+            end
         -- if prey is endoed and pred has soothing stomach, add satiation
         elseif v.Digestion == DType.Endo then
             if SP_MCMGet("Hunger") and Osi.IsPartyMember(v.Pred, 0) == 1 and Osi.HasPassive(v.Pred, "SP_SoothingStomach") == 1 then
                 VoreData[v.Pred].Satiation = VoreData[v.Pred].Satiation +
                     weightDiff * SP_MCMGet("HungerSatiationRate") / 100
             end
+        end
+    end
+    -- Process auto-absorb after the loop
+    for _, entry in ipairs(slowAutoAbsorb) do
+        if VoreData[entry.prey] ~= nil and VoreData[entry.pred] ~= nil then
+            SP_DelayCallTicks(3, function()
+                SP_AutoAbsorbPrey(entry.pred, entry.prey)
+            end)
         end
     end
 end
@@ -1183,11 +1289,23 @@ function SP_FastDigestion(pred, allPrey, force)
     if Osi.HasPassive(pred, "SP_BoilingInsides") == 1 then
         force = force * 2
     end
+    local predSize = SP_GetCharacterSize(pred)
+    local autoAbsorbList = {}
     for prey, locus in pairs(allPrey) do
         if VoreData[prey] ~= nil then
+            -- Size bonus: larger preds digest smaller prey faster
+            local preySize = SP_GetCharacterSize(prey)
+            local sizeForce = force
+            if predSize > preySize then
+                -- each size category difference doubles the digestion rate
+                sizeForce = force * (1 + (predSize - preySize))
+            elseif preySize > predSize and force > 0 then
+                -- larger prey is harder to digest, halved per size category
+                sizeForce = math.max(1, force // (1 + (preySize - predSize)))
+            end
             local preyWeightDiff = 0
             if VoreData[prey].Digestion == DType.Dead and Osi.HasActiveStatus(prey, "SP_ReformationStatus") == 1 then
-                preyWeightDiff = math.min(VoreData[prey].FixedWeight - force, force)
+                preyWeightDiff = math.min(VoreData[prey].FixedWeight - sizeForce, sizeForce)
                 -- remembers all characters whose weight we need to update
                 SP_ReduceWeightRecursive(prey, -preyWeightDiff, false, true)
                 _P("Reformation: " .. preyWeightDiff)
@@ -1198,11 +1316,11 @@ function SP_FastDigestion(pred, allPrey, force)
                 end
             elseif VoreData[prey].Digestion == DType.Dead then
 
-                -- if force is 0 we fully digest the prey
+                -- if force is 0 we fully digest the prey (e.g. Churn spell)
                 if force == 0 then
                     preyWeightDiff = VoreData[prey].Weight - VoreData[prey].FixedWeight // 5
                 else
-                    preyWeightDiff = math.min(VoreData[prey].Weight - VoreData[prey].FixedWeight // 5, force)
+                    preyWeightDiff = math.min(VoreData[prey].Weight - VoreData[prey].FixedWeight // 5, sizeForce)
                 end
                 if SP_MCMGet("WeightGain") then
                     VoreData[pred].Fat = VoreData[pred].Fat +
@@ -1219,9 +1337,99 @@ function SP_FastDigestion(pred, allPrey, force)
                 end
                 -- remembers all characters whose weight we need to update
                 SP_ReduceWeightRecursive(prey, preyWeightDiff, false, true)
+
+                -- Passive auto-absorb: if prey weight has reached minimum, queue for absorption
+                if VoreData[prey] ~= nil and VoreData[prey].Weight <= VoreData[prey].FixedWeight // 5 then
+                    table.insert(autoAbsorbList, prey)
+                end
             end
         end
     end
+    -- Process auto-absorb after the loop to avoid modifying the table during iteration
+    for _, prey in ipairs(autoAbsorbList) do
+        if VoreData[prey] ~= nil and VoreData[pred] ~= nil then
+            SP_DelayCallTicks(3, function()
+                SP_AutoAbsorbPrey(pred, prey)
+            end)
+        end
+    end
+end
+
+---Passively absorbs a fully digested prey. Adds waste to pred and removes prey.
+---@param pred CHARACTER
+---@param prey CHARACTER
+function SP_AutoAbsorbPrey(pred, prey)
+    if VoreData[pred] == nil or VoreData[prey] == nil then
+        return
+    end
+    _P("Auto-absorbing " .. prey .. " from " .. pred)
+
+    local wasteAmount = math.max(1, VoreData[prey].FixedWeight // 10)
+    VoreData[pred].Waste = VoreData[pred].Waste + wasteAmount
+    _P("Added " .. wasteAmount .. " waste to " .. pred .. " (total: " .. VoreData[pred].Waste .. ")")
+
+    -- Use the existing absorb path to clean up the prey
+    SP_RegurgitatePrey(pred, prey, 1, "Absorb", VoreData[prey].Locus)
+
+    -- Check if bowels should auto-flip to lethal based on waste threshold
+    SP_CheckWasteThreshold(pred)
+end
+
+---Checks if pred's waste exceeds the bowels lethal threshold and updates digestion accordingly.
+---@param pred CHARACTER
+function SP_CheckWasteThreshold(pred)
+    if VoreData[pred] == nil then
+        return
+    end
+    local threshold = SP_MCMGet("WasteThreshold")
+    if threshold > 0 and VoreData[pred].Waste >= threshold then
+        if Osi.HasActiveStatus(pred, "SP_LocusLethal_A") ~= 1 then
+            _P("Waste threshold reached, auto-flipping bowels to lethal")
+            SP_SetLocusDigestion(pred, "A", true)
+        end
+    elseif threshold > 0 and VoreData[pred].Waste < threshold then
+        if Osi.HasActiveStatus(pred, "SP_LocusLethal_A") == 1 then
+            _P("Waste below threshold, auto-flipping bowels to endo")
+            SP_SetLocusDigestion(pred, "A", false)
+        end
+    end
+end
+
+---Disposes waste from the pred, spawning disposal piles and reducing weight.
+---@param pred CHARACTER
+function SP_DisposeWaste(pred)
+    if VoreData[pred] == nil or VoreData[pred].Waste <= 0 then
+        return
+    end
+
+    local wasteAmount = VoreData[pred].Waste
+    _P("Disposing " .. wasteAmount .. " waste from " .. pred)
+
+    -- Spawn disposal piles behind the pred (bowels disposal)
+    local predX, predY, predZ = Osi.GetPosition(pred)
+    local predXRotation, predYRotation, predZRotation = Osi.GetRotation(pred)
+    -- Place pile behind the pred (180 degrees from facing)
+    predYRotation = (predYRotation + 180) * math.pi / 180
+    local pileX = predX + SP_MCMGet("RegurgitationDistance") * math.cos(predYRotation)
+    local pileZ = predZ + SP_MCMGet("RegurgitationDistance") * math.sin(predYRotation)
+    -- Scale quantity: 1 pile per 25 kg of waste, minimum 1
+    local pileCount = math.max(1, wasteAmount // 25)
+    for i = 1, pileCount do
+        Osi.CreateAt('d15b0a7e-3c2f-4e8a-9d6b-1a2f3e4d5c6b', pileX, predY, pileZ, 1, 0, "")
+    end
+    _P("Spawned " .. pileCount .. " disposal pile(s) for waste " .. wasteAmount)
+
+    -- Reduce pred's AddWeight by the waste amount
+    VoreData[pred].AddWeight = math.max(0, VoreData[pred].AddWeight - wasteAmount)
+    SP_ReduceWeightRecursive(pred, wasteAmount, true, false)
+
+    -- Clear waste
+    VoreData[pred].Waste = 0
+
+    -- Check if bowels should flip back to endo
+    SP_CheckWasteThreshold(pred)
+
+    SP_VoreDataEntry(pred, false)
 end
 
 ---Returns character weight + their inventory weight.

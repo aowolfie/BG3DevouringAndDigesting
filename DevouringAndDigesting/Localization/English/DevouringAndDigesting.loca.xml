@@ -421,7 +421,32 @@
 	
 	<content contentuid="h3e39f96cg77e6g4954gb1e7gb74286a35974" version="1">Churn</content>
 	<content contentuid="h72e19c2fg7171g4c8bgac89g75d92be2e9bb" version="1">With a single touch, you make a pred's belly rapidly boil through it's prey. All creatures inside of the predator's stomach immediately take [1] and [2], and all the dead prey are immediately fully digested.</content>
-	
+
+	<content contentuid="hc3d4e5f6ga7b8g9c0dg1e2fg3a4b5c6d7e8f" version="1">Churn (Womb)</content>
+	<content contentuid="hd4e5f6a7gb8c9g0d1eg2f3ag4b5c6d7e8f9a" version="1">With a single touch, you make a pred's womb rapidly churn through it's contents. All creatures inside of the predator's womb immediately take [1] and [2], and all the dead prey are immediately fully digested.</content>
+
+	<content contentuid="he5f6a7b8gc9d0g1e2fg3a4bg5c6d7e8f9a0b" version="1">Churn (Balls)</content>
+	<content contentuid="hf6a7b8c9gd0e1g2f3ag4b5cg6d7e8f9a0b1c" version="1">With a single touch, you make a pred's balls rapidly churn through their contents. All creatures inside of the predator's balls immediately take [1] and [2], and all the dead prey are immediately fully digested.</content>
+
+	<content contentuid="h9a0b1c2dg3e4fg5a6bg7c8dg9e0f1a2b3c4d" version="1">Clench</content>
+	<content contentuid="ha0b1c2d3g4e5fg6a7bg8c9dg0e1f2a3b4c5d" version="1">With a single touch, you make a pred's bowels violently tighten around their prey. All creatures inside of the predator's bowels immediately take [1] and [2], and all the dead prey are immediately fully digested.</content>
+
+	<content contentuid="ha7b8c9d0ge1f2g3a4bg5c6dg7e8f9a0b1c2d" version="1">Clench (Womb)</content>
+	<content contentuid="hb8c9d0e1gf2a3g4b5cg6d7eg8f9a0b1c2d3e" version="1">With a single touch, you make a pred's womb violently tighten around their contents. All creatures inside of the predator's womb immediately take [1] and [2], and all the dead prey are immediately fully digested.</content>
+
+	<content contentuid="hc9d0e1f2ga3b4g5c6dg7e8fg9a0b1c2d3e4f" version="1">Clench (Balls)</content>
+	<content contentuid="hd0e1f2a3gb4c5g6d7eg8f9ag0b1c2d3e4f5a" version="1">With a single touch, you make a pred's balls violently tighten around their contents. All creatures inside of the predator's balls immediately take [1] and [2], and all the dead prey are immediately fully digested.</content>
+
+	<!-- View Organ Contents -->
+	<content contentuid="ha1b2c3d4ge5f6g7a8bg9c0dge1f2a3b4c5d6" version="1">View Contents</content>
+	<content contentuid="hb2c3d4e5gf6a7g8b9cg0d1eg2f3a4b5c6d7e" version="1">See what creatures are currently inside each of your organs.</content>
+
+	<content contentuid="h7e8f9a0bg1c2dg3e4fg5a6bg7c8d9e0f1a2b" version="1">Dispose Waste</content>
+	<content contentuid="h8f9a0b1cg2d3eg4f5ag6b7cg8d9e0f1a2b3c" version="1">Expel accumulated waste from digested prey. Disposal piles are spawned behind the predator and the weight is reduced accordingly.</content>
+
+	<content contentuid="h5c1d2e3fg4a5bg6c7dg8e9fg0a1b2c3d4e5f" version="1">Bowels Waste Threshold</content>
+	<content contentuid="h6d2e3f4ag5b6cg7d8eg9f0ag1b2c3d4e5f6a" version="1">Amount of waste at which bowels automatically switch to lethal digestion. When waste drops below this threshold (via disposal), bowels switch back to endo. Set to 0 to disable.</content>
+
 	<content contentuid="hdbb58683gb507g4a89gaf9cg046e07357af0" version="1">Rebirth</content>
 	<content contentuid="had93fe5c851040a0a594cc2fa11a6a36694d" version="1">Rebirth (Stomach)</content>
     <content contentuid="h5ce262082f424b0d9dc6f5072c7ed1c187g7" version="1">Rebirth (Ass)</content>
@@ -646,6 +671,9 @@
 	<content contentuid="hc42a1cc4g0f53g4c6ag8039g588c4746ca5f" version="1">Gurgle Probability</content>
 	<content contentuid="h4e78058fge597g4483g8df2g659cf3bd9292" version="1">The % chance of a gurgle being played every 6 seconds (a turn). Set to 0 to disable.</content>
 
+	<content contentuid="he1f2a3b4gc5d6g7e8fg9a0bg1c2d3e4f5a6b" version="1">Fart Probability</content>
+	<content contentuid="hf2a3b4c5gd6e7g8f9ag0b1cg2d3e4f5a6b7c" version="1">The % chance of a fart being played every 6 seconds (a turn) when bowels have contents. Set to 0 to disable.</content>
+
     <content contentuid="he87e3e39189a45de82db37295afb6361e9ac" version="1">Reload Belly Config</content>
     <content contentuid="h43863a6bcac843bea9d9600884f817539b63" version="1">Reloads the config for bellies for custom races from the currently saved CustomRacesBellies.json (if it exists)&#10;Normally it's loaded when you load a save, but this option allows you to manually reload it.</content>
 	
@@ -721,4 +749,10 @@
     <content contentuid="h39b3be56481041ceb550362ae42cc3e9dg3c" version="1">Move Prey (Bowels to Stomach)</content>
     <content contentuid="hf47e6963a43c440eb5a1e83d2c80af293bfd" version="1">Potion of Rest</content>
     <content contentuid="h32127c41138d493dab4a3dc437512905ac77" version="1">Use this to start a Long Rest while a player character is devoured. A confirmation window will appear on screen. You must click 'yes' within a couple of seconds, or the potion will not work.</content>
+    <!-- disposal pile -->
+    <content contentuid="hd15b0a7eg3c2fg4e8ag9d6bg1a2f3e4d5c6b" version="1">Disposal Pile</content>
+    <content contentuid="h6a8f2d1eg5b3cg4f7ag8e9dg2c1b4a5f6e3d" version="1">The remains of a fully digested creature. Not much left to identify.</content>
+    <!-- disposal pile MCM -->
+    <content contentuid="h3a9f7c2eg1d4bg4e5fg6a8bg7c9d0e1f2a3b" version="1">Disposal Pile</content>
+    <content contentuid="h4b0a8d3fg2e5cg4f6ag7b9cg8d0e1f2a3b4c" version="1">When absorbing a fully digested prey, a disposal pile is spawned behind the pred. The number of piles scales with the prey's original weight (1 per 25 kg).</content>
 </contentList>

@@ -112,14 +112,72 @@ function SP_OnSpellCast(caster, spell, spellType, spellElement, storyActionID)
             if VoreData[caster] ~= nil then
                 local lsource = spellParams[4]
                 local ldest = spellParams[5]
-                for k, v in pairs(VoreData[caster].Prey) do
-                    if VoreData[k] ~= nil and VoreData[k].Digestion ~= DType.Dead and v == lsource then
-                        SP_SwitchToLocus(caster, k, ldest)
-                    end
-                end
+                -- STR+CON check with disadvantage to move prey between loci
+                -- Store the move parameters for the roll result handler
+                local eventName = "MovePreyCheck_" .. lsource .. "_" .. ldest .. "_" .. caster
+                -- Calculate DC: base 10, reduced by pred's CON modifier (simulates STR+CON)
+                local conScore = Osi.GetAbility(caster, "Constitution") or 10
+                local conMod = (conScore - 10) // 2
+                local dc = math.max(1, math.min(10 - conMod, 30))
+                -- Roll STR ability check at disadvantage (2 = disadvantage)
+                Osi.RequestPassiveRoll(caster, caster, "AbilityCheck", "Strength", DCTable[dc], 2, eventName)
             end
+        elseif spellName == "DisposeWaste" then
+            SP_DisposeWaste(caster)
+        elseif spellName == "ViewContents" then
+            SP_ViewOrganContents(caster)
         end
     end
+end
+
+---Builds and displays a message showing what's inside each organ of a pred.
+---@param pred CHARACTER
+function SP_ViewOrganContents(pred)
+    if VoreData[pred] == nil or next(VoreData[pred].Prey) == nil then
+        Osi.OpenMessageBox(pred, "Nothing inside.")
+        return
+    end
+
+    local locusNames = {
+        ["O"] = "Stomach",
+        ["A"] = "Bowels",
+        ["U"] = "Womb",
+        ["C"] = "Balls"
+    }
+
+    local locusContents = {}
+    for _, locusKey in ipairs({"O", "A", "U", "C"}) do
+        locusContents[locusKey] = {}
+    end
+
+    for prey, locus in pairs(VoreData[pred].Prey) do
+        local name = SP_GetDisplayNameFromGUID(prey)
+        local state = ""
+        if VoreData[prey] ~= nil then
+            if VoreData[prey].Digestion == DType.Dead then
+                state = " (dead)"
+            elseif VoreData[prey].Digestion == DType.Lethal then
+                state = " (digesting)"
+            end
+        end
+        if locusContents[locus] ~= nil then
+            table.insert(locusContents[locus], name .. state)
+        end
+    end
+
+    local parts = {}
+    for _, locusKey in ipairs({"O", "A", "U", "C"}) do
+        local contents = locusContents[locusKey]
+        if #contents > 0 then
+            table.insert(parts, locusNames[locusKey] .. ": " .. table.concat(contents, ", "))
+        end
+    end
+
+    local message = table.concat(parts, "\n")
+    if message == "" then
+        message = "Nothing inside."
+    end
+    Osi.OpenMessageBox(pred, message)
 end
 
 
@@ -255,13 +313,37 @@ function SP_OnSpellCastTarget(caster, target, spell, spellType, spellElement, st
                 end
             end
         elseif spellName == 'Churn' then
+            -- Support locus suffix: SP_Target_Churn_U, SP_Target_Churn_C, default to O
+            local churnLocus = spellParams[4]
+            if not churnLocus or not EnumLoci[churnLocus] then churnLocus = 'O' end
             if VoreData[target] ~= nil then
                 local fullDigestThese = {}
                 for k, v in pairs(VoreData[target].Prey) do
-                    if VoreData[k].Digestion == DType.Lethal then
-                        Osi.ApplyStatus(k, 'SP_ChurnStatus' , 0, 1, target)
-                    elseif VoreData[k].Digestion == DType.Dead then
-                        fullDigestThese[k] = v
+                    if v == churnLocus then
+                        if VoreData[k].Digestion == DType.Lethal then
+                            Osi.ApplyStatus(k, 'SP_ChurnStatus' , 0, 1, target)
+                        elseif VoreData[k].Digestion == DType.Dead then
+                            fullDigestThese[k] = v
+                        end
+                    end
+                end
+                if next(fullDigestThese) ~= nil then
+                    SP_FastDigestion(target, fullDigestThese, 0)
+                end
+            end
+        elseif spellName == 'Clench' then
+            -- Support locus suffix: SP_Target_Clench_U, SP_Target_Clench_C, default to A
+            local clenchLocus = spellParams[4]
+            if not clenchLocus or not EnumLoci[clenchLocus] then clenchLocus = 'A' end
+            if VoreData[target] ~= nil then
+                local fullDigestThese = {}
+                for k, v in pairs(VoreData[target].Prey) do
+                    if v == clenchLocus then
+                        if VoreData[k].Digestion == DType.Lethal then
+                            Osi.ApplyStatus(k, 'SP_ClenchStatus' , 0, 1, target)
+                        elseif VoreData[k].Digestion == DType.Dead then
+                            fullDigestThese[k] = v
+                        end
                     end
                 end
                 if next(fullDigestThese) ~= nil then
@@ -309,10 +391,22 @@ function SP_OnRollResults(eventName, roller, rollSubject, resultType, isActiveRo
         
         if Osi.HasPassive(rollSubject, "SP_SC_EldritchPrison") == 0 and SP_MCMGet("IndigestionLimit") ~= 0 then
             Osi.ApplyStatus(rollSubject, "SP_Indigestion", 1 * SecondsPerTurn)
-        
-            if Osi.GetStatusTurns(rollSubject, "SP_Indigestion") >= SP_MCMGet("IndigestionLimit") then
+
+            -- Size bonus: larger preds can hold down more indigestion before forced regurgitation
+            local indigestionLimit = SP_MCMGet("IndigestionLimit")
+            local predSize = SP_GetCharacterSize(rollSubject)
+            local preySize = SP_GetCharacterSize(roller)
+            if predSize > preySize then
+                -- each size category the pred is larger adds +1 to the indigestion limit
+                indigestionLimit = indigestionLimit + (predSize - preySize)
+            elseif preySize > predSize then
+                -- larger prey causes more indigestion, reducing the limit (min 1)
+                indigestionLimit = math.max(1, indigestionLimit - (preySize - predSize))
+            end
+
+            if Osi.GetStatusTurns(rollSubject, "SP_Indigestion") >= indigestionLimit then
                 Osi.RemoveStatus(rollSubject, "SP_Indigestion")
-                -- evey prey will be regurgitated
+                -- every prey will be regurgitated
                 SP_RegurgitatePrey(rollSubject, "All", 0, "", VoreData[roller].Locus)
                 -- preds will not try to vore anyone after forced regurgitation
                 Osi.ApplyStatus(rollSubject, "SP_AI_HELPER_BLOCKVORE", SecondsPerTurn * 10, 1, rollSubject)
@@ -327,6 +421,24 @@ function SP_OnRollResults(eventName, roller, rollSubject, resultType, isActiveRo
         if resultType == 1 and VoreData[roller] ~= nil and VoreData[rollSubject] ~= nil then
             -- add animation here
             SP_RegurgitatePrey(rollSubject, roller, 0, "", VoreData[roller].Locus)
+        end
+    elseif eventArgs[1] == "MovePreyCheck" then
+        _P("event: " .. eventName)
+        _P("rollresult: " .. tostring(resultType))
+        -- eventArgs: MovePreyCheck, lsource, ldest, casterGUID...
+        local lsource = eventArgs[2]
+        local ldest = eventArgs[3]
+        -- Reconstruct caster GUID from remaining args (GUIDs contain underscores)
+        local caster = table.concat({table.unpack(eventArgs, 4, #eventArgs)}, "_")
+        if resultType == 1 and VoreData[caster] ~= nil then
+            _P("MovePrey check succeeded: " .. lsource .. " -> " .. ldest)
+            for k, v in pairs(VoreData[caster].Prey) do
+                if VoreData[k] ~= nil and VoreData[k].Digestion ~= DType.Dead and v == lsource then
+                    SP_SwitchToLocus(caster, k, ldest)
+                end
+            end
+        else
+            _P("MovePrey check failed")
         end
     end
 end

@@ -125,7 +125,7 @@ function SP_CanFitItem(pred, item)
     if predRoom > itemData then
         return true
     else
-        _P("Can't fit " .. item " inside " .. pred)
+        _P("Can't fit " .. item .. " inside " .. pred)
         return false
     end
 end
@@ -303,6 +303,28 @@ function SP_PlayGurgle(pred, preyLethal, preyDigestion)
     end
 end
 
+---plays a random fart sound when bowels have contents
+---@param pred GUIDSTRING
+---@param bowelPreyCount integer number of prey in bowels
+function SP_PlayFart(pred, bowelPreyCount)
+    local basePercentage = SP_MCMGet("FartProbability")
+
+    -- scale chance with number of bowel prey
+    basePercentage = basePercentage * (1 + bowelPreyCount * 0.5)
+
+    if basePercentage > 100 then
+        basePercentage = 100
+    elseif basePercentage == 0 or #FartSounds == 0 then
+        return
+    end
+    -- convert the percentage
+    basePercentage = 100 * #FartSounds // basePercentage
+    local randomResult = Osi.Random(basePercentage) + 1
+    if randomResult <= #FartSounds then
+        Osi.PlaySound(pred, FartSounds[randomResult])
+    end
+end
+
 ---@param level integer
 ---@param num integer
 ---@return integer
@@ -339,6 +361,8 @@ function SP_AddPredSpells(pred, force)
         Osi.AddSpell(pred, "SP_Zone_Absorb_All", 0, 0)
         Osi.AddSpell(pred, 'SP_Zone_FlexBelly', 0, 0)
         Osi.AddSpell(pred, "SP_Zone_MovePrey", 0, 0)
+        Osi.AddSpell(pred, "SP_Zone_DisposeWaste", 0, 0)
+        Osi.AddSpell(pred, "SP_Zone_ViewContents", 0, 0)
         --Osi.AddSpell(pred, "SP_Zone_TalkToPrey")
     end
 end
@@ -351,6 +375,8 @@ function SP_RemovePredSpells(pred)
         Osi.RemoveSpell(pred, 'SP_Zone_SwallowDown', 1)
         Osi.RemoveSpell(pred, 'SP_Zone_FlexBelly', 1)
         Osi.RemoveSpell(pred, "SP_Zone_MovePrey", 1)
+        Osi.RemoveSpell(pred, "SP_Zone_DisposeWaste", 1)
+        Osi.RemoveSpell(pred, "SP_Zone_ViewContents", 1)
         --Osi.RemoveSpell(prey, "SP_Zone_TalkToPrey")
     end
 end
