@@ -668,6 +668,17 @@
                     "Handles": {"NameHandle":"h043674ecg0be8g4582g88f7g18ba9a6627cf","DescriptionHandle":"hc80f837cgf6cdg48f5gaf21gee0e67ec64b9"}
                 },
                 {
+                    "Id": "RarityDigestion",
+                    "Name": "Rarity-Based Item Digestion",
+                    "Default": true,
+                    "Description": "When enabled, item digestion chance is based on rarity. Common items are easily digested (~33%), Uncommon (~17%), Rare (~10%), Epic (~5%), Legendary (~2%). When disabled, all items have a flat 10% chance per tick.",
+                    "Type": "checkbox",
+                    "VisibleIf": {
+                        "Conditions": [{"SettingId": "ShowWIP", "ExpectedValue": "true", "Operator": "=="}]
+                    },
+                    "Handles": {"NameHandle":"h7a3b4c5dge8f9g0a1bg2c3dg4e5f6a7b8c9d","DescriptionHandle":"h8b4c5d6eg9f0ag1b2cg3d4eg5f6a7b8c9d0e"}
+                },
+                {
                     "Id": "WeightGain",
                     "Name": "Weight Gain",
                     "Default": false,

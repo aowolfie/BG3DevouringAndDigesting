@@ -464,6 +464,36 @@ function SP_SwallowAllItems(pred, container)
     end
 end
 
+---Returns the digestion chance (out of 10) for an item based on its rarity.
+---Common items are most likely to be digested, legendary items almost never.
+---@param uuid GUIDSTRING
+---@return integer chance out of 10 (higher = more likely to survive)
+function SP_GetItemDigestionRoll(uuid)
+    if not SP_MCMGet("RarityDigestion") then
+        return 10 -- flat 1/10 chance when rarity-based digestion is off
+    end
+    local itemEntity = Ext.Entity.Get(uuid)
+    local rarity = 0
+    if itemEntity.Value ~= nil then
+        rarity = itemEntity.Value.Rarity or 0
+    end
+    -- ItemDataRarity: Common=0, Unique=1, Uncommon=2, Rare=3, Epic=4, Legendary=5, Divine=6, Sentinel=7
+    -- Lower roll target = easier to digest (1/N chance, item digested when Random(N)==1)
+    if rarity <= 0 then
+        return 3      -- Common: 1/3 chance (~33%)
+    elseif rarity == 2 then
+        return 6      -- Uncommon: 1/6 chance (~17%)
+    elseif rarity == 3 then
+        return 10     -- Rare: 1/10 chance (10%)
+    elseif rarity == 4 then
+        return 20     -- Epic: 1/20 chance (5%)
+    elseif rarity >= 5 then
+        return 50     -- Legendary/Divine: 1/50 chance (2%)
+    else
+        return 10     -- Unique/Sentinel/other: 1/10 default
+    end
+end
+
 ---digests a random item in pred's inventory
 ---@param pred CHARACTER
 function SP_DigestItem(pred)
@@ -483,6 +513,11 @@ function SP_DigestItem(pred)
         i = i + 1
         if Osi.IsStoryItem(uuid) == 0 and Osi.IsTagged(uuid, '983087c8-c9d3-4a87-bc69-65f9329666c8') == 0 and
             Osi.IsTagged(uuid, '7b96246c-54ba-43ea-b01d-4e0b20ad35f1') == 0 then
+            -- Rarity-based digestion: rarer items are harder to digest
+            local rollTarget = SP_GetItemDigestionRoll(uuid)
+            if Osi.Random(rollTarget) ~= 1 then
+                return -- item survived this tick
+            end
             _P("item" .. uuid)
             if Osi.IsConsumable(uuid) == 1 then
                 Osi.Use(pred, uuid, "")
@@ -908,6 +943,12 @@ function SP_CalculateWeightReduction(pred, prey, digestionType)
     end
     if Osi.HasActiveStatus(pred, "SP_Unburdened") == 1 then
         capacityMulti = capacityMulti + 1/3
+    end
+    -- Size bonus: larger preds have more room for smaller prey
+    local predSize = SP_GetCharacterSize(pred)
+    local preySize = SP_GetCharacterSize(prey)
+    if predSize > preySize then
+        capacityMulti = capacityMulti + (predSize - preySize) * 0.5
     end
     if Osi.HasPassive(prey, 'SP_Dense') == 1 and digestionType == DType.Lethal then
         preyWeight = preyWeight * 2
