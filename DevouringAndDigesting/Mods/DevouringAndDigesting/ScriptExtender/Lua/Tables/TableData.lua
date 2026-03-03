@@ -49,6 +49,12 @@ GurgleSounds = {
     "SHA_SpiderMeatHunk_StomachGurgle_B",
 }
 
+-- List of fart sounds randomly played when bowels have contents
+FartSounds = {
+    "SHA_SpiderMeatHunk_StomachGurgle_A",
+    "SHA_SpiderMeatHunk_StomachGurgle_B",
+}
+
 -- ApplyStatus applies statuses for a number of seconds instead of turns.
 -- Multiply the duration by this.
 SecondsPerTurn = 6

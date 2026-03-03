@@ -26,6 +26,7 @@ function SP_Digesting(pred)
         end
     end
     -- iterate through prey
+    local bowelCount = 0
     for prey, locus in pairs(VoreData[pred].Prey) do
         if VoreData[prey].Digestion ~= DType.Dead and (SP_MCMGet("TeleportPrey") or VoreData[prey].Combat ~= "") then
             SP_TeleportToPred(prey)
@@ -34,6 +35,9 @@ function SP_Digesting(pred)
             gradualCount = gradualCount + 1
         elseif VoreData[prey].Digestion == DType.Lethal then
             lethalCount = lethalCount + 1
+        end
+        if locus == "A" then
+            bowelCount = bowelCount + 1
         end
 
     end
@@ -55,6 +59,10 @@ function SP_Digesting(pred)
         end
     end
     SP_PlayGurgle(pred, lethalCount, gradualCount)
+    -- fart when bowels have contents
+    if bowelCount > 0 then
+        SP_PlayFart(pred, bowelCount)
+    end
 end
 
 --- turns a character into a pred or a prey

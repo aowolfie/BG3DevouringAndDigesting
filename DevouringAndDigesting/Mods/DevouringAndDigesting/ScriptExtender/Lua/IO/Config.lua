@@ -23,6 +23,16 @@ local DEFAULT_VARS = {
                 slider = true,
             },
         },
+        FartProbability = {
+            name = "Fart Probability",
+            description = "The % chance of a fart being played every 6 seconds (a turn) when bowels have contents. Set to 0 to disable.",
+            value = 5,
+            default = 5,
+            range = {0, 100, 1},
+            extras = {
+                slider = true,
+            },
+        },
         BellyScale = {
             name = "Belly Scale",
             description = "Increases / reduces the size of all bellies. Default is 100%",
