@@ -112,12 +112,18 @@ function SP_OnSpellCast(caster, spell, spellType, spellElement, storyActionID)
             if VoreData[caster] ~= nil then
                 local lsource = spellParams[4]
                 local ldest = spellParams[5]
-                for k, v in pairs(VoreData[caster].Prey) do
-                    if VoreData[k] ~= nil and VoreData[k].Digestion ~= DType.Dead and v == lsource then
-                        SP_SwitchToLocus(caster, k, ldest)
-                    end
-                end
+                -- STR+CON check with disadvantage to move prey between loci
+                -- Store the move parameters for the roll result handler
+                local eventName = "MovePreyCheck_" .. lsource .. "_" .. ldest .. "_" .. caster
+                -- Calculate DC: base 10, reduced by pred's CON modifier (simulates STR+CON)
+                local conScore = Osi.GetAbility(caster, "Constitution") or 10
+                local conMod = (conScore - 10) // 2
+                local dc = math.max(1, math.min(10 - conMod, 30))
+                -- Roll STR ability check at disadvantage (2 = disadvantage)
+                Osi.RequestPassiveRoll(caster, caster, "AbilityCheck", "Strength", DCTable[dc], 2, eventName)
             end
+        elseif spellName == "DisposeWaste" then
+            SP_DisposeWaste(caster)
         end
     end
 end
@@ -258,10 +264,30 @@ function SP_OnSpellCastTarget(caster, target, spell, spellType, spellElement, st
             if VoreData[target] ~= nil then
                 local fullDigestThese = {}
                 for k, v in pairs(VoreData[target].Prey) do
-                    if VoreData[k].Digestion == DType.Lethal then
-                        Osi.ApplyStatus(k, 'SP_ChurnStatus' , 0, 1, target)
-                    elseif VoreData[k].Digestion == DType.Dead then
-                        fullDigestThese[k] = v
+                    -- Churn only affects stomach (O) prey
+                    if v == 'O' then
+                        if VoreData[k].Digestion == DType.Lethal then
+                            Osi.ApplyStatus(k, 'SP_ChurnStatus' , 0, 1, target)
+                        elseif VoreData[k].Digestion == DType.Dead then
+                            fullDigestThese[k] = v
+                        end
+                    end
+                end
+                if next(fullDigestThese) ~= nil then
+                    SP_FastDigestion(target, fullDigestThese, 0)
+                end
+            end
+        elseif spellName == 'Clench' then
+            if VoreData[target] ~= nil then
+                local fullDigestThese = {}
+                for k, v in pairs(VoreData[target].Prey) do
+                    -- Clench only affects bowels (A) prey
+                    if v == 'A' then
+                        if VoreData[k].Digestion == DType.Lethal then
+                            Osi.ApplyStatus(k, 'SP_ClenchStatus' , 0, 1, target)
+                        elseif VoreData[k].Digestion == DType.Dead then
+                            fullDigestThese[k] = v
+                        end
                     end
                 end
                 if next(fullDigestThese) ~= nil then
@@ -327,6 +353,24 @@ function SP_OnRollResults(eventName, roller, rollSubject, resultType, isActiveRo
         if resultType == 1 and VoreData[roller] ~= nil and VoreData[rollSubject] ~= nil then
             -- add animation here
             SP_RegurgitatePrey(rollSubject, roller, 0, "", VoreData[roller].Locus)
+        end
+    elseif eventArgs[1] == "MovePreyCheck" then
+        _P("event: " .. eventName)
+        _P("rollresult: " .. tostring(resultType))
+        -- eventArgs: MovePreyCheck, lsource, ldest, casterGUID...
+        local lsource = eventArgs[2]
+        local ldest = eventArgs[3]
+        -- Reconstruct caster GUID from remaining args (GUIDs contain underscores)
+        local caster = table.concat({table.unpack(eventArgs, 4, #eventArgs)}, "_")
+        if resultType == 1 and VoreData[caster] ~= nil then
+            _P("MovePrey check succeeded: " .. lsource .. " -> " .. ldest)
+            for k, v in pairs(VoreData[caster].Prey) do
+                if VoreData[k] ~= nil and VoreData[k].Digestion ~= DType.Dead and v == lsource then
+                    SP_SwitchToLocus(caster, k, ldest)
+                end
+            end
+        else
+            _P("MovePrey check failed")
         end
     end
 end

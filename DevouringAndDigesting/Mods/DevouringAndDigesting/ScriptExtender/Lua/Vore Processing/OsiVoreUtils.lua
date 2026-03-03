@@ -339,6 +339,7 @@ function SP_AddPredSpells(pred, force)
         Osi.AddSpell(pred, "SP_Zone_Absorb_All", 0, 0)
         Osi.AddSpell(pred, 'SP_Zone_FlexBelly', 0, 0)
         Osi.AddSpell(pred, "SP_Zone_MovePrey", 0, 0)
+        Osi.AddSpell(pred, "SP_Zone_DisposeWaste", 0, 0)
         --Osi.AddSpell(pred, "SP_Zone_TalkToPrey")
     end
 end
@@ -351,6 +352,7 @@ function SP_RemovePredSpells(pred)
         Osi.RemoveSpell(pred, 'SP_Zone_SwallowDown', 1)
         Osi.RemoveSpell(pred, 'SP_Zone_FlexBelly', 1)
         Osi.RemoveSpell(pred, "SP_Zone_MovePrey", 1)
+        Osi.RemoveSpell(pred, "SP_Zone_DisposeWaste", 1)
         --Osi.RemoveSpell(prey, "SP_Zone_TalkToPrey")
     end
 end

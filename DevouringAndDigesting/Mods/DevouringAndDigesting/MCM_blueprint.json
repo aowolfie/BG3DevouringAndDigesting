@@ -94,6 +94,18 @@
                     "Description": "When absorbing a fully digested prey, a disposal pile is spawned behind the pred. The number of piles scales with the prey's original weight (1 per 25 kg).",
                     "Type": "checkbox",
                     "Handles": {"NameHandle":"h3a9f7c2eg1d4bg4e5fg6a8bg7c9d0e1f2a3b","DescriptionHandle":"h4b0a8d3fg2e5cg4f6ag7b9cg8d0e1f2a3b4c"}
+                },
+                {
+                    "Id": "WasteThreshold",
+                    "Name": "Bowels Waste Threshold",
+                    "Default": 50,
+                    "Description": "Amount of waste at which bowels automatically switch to lethal digestion. When waste drops below this threshold (via disposal), bowels switch back to endo. Set to 0 to disable.",
+                    "Type": "slider_int",
+                    "Options": {
+                        "Min": 0,
+                        "Max": 500
+                    },
+                    "Handles": {"NameHandle":"h5c1d2e3fg4a5bg6c7dg8e9fg0a1b2c3d4e5f","DescriptionHandle":"h6d2e3f4ag5b6cg7d8eg9f0ag1b2c3d4e5f6a"}
                 }
             ],
             "VisibleIf": {

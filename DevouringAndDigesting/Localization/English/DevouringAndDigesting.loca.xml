@@ -421,7 +421,16 @@
 	
 	<content contentuid="h3e39f96cg77e6g4954gb1e7gb74286a35974" version="1">Churn</content>
 	<content contentuid="h72e19c2fg7171g4c8bgac89g75d92be2e9bb" version="1">With a single touch, you make a pred's belly rapidly boil through it's prey. All creatures inside of the predator's stomach immediately take [1] and [2], and all the dead prey are immediately fully digested.</content>
-	
+
+	<content contentuid="h9a0b1c2dg3e4fg5a6bg7c8dg9e0f1a2b3c4d" version="1">Clench</content>
+	<content contentuid="ha0b1c2d3g4e5fg6a7bg8c9dg0e1f2a3b4c5d" version="1">With a single touch, you make a pred's bowels violently tighten around their prey. All creatures inside of the predator's bowels immediately take [1] and [2], and all the dead prey are immediately fully digested.</content>
+
+	<content contentuid="h7e8f9a0bg1c2dg3e4fg5a6bg7c8d9e0f1a2b" version="1">Dispose Waste</content>
+	<content contentuid="h8f9a0b1cg2d3eg4f5ag6b7cg8d9e0f1a2b3c" version="1">Expel accumulated waste from digested prey. Disposal piles are spawned behind the predator and the weight is reduced accordingly.</content>
+
+	<content contentuid="h5c1d2e3fg4a5bg6c7dg8e9fg0a1b2c3d4e5f" version="1">Bowels Waste Threshold</content>
+	<content contentuid="h6d2e3f4ag5b6cg7d8eg9f0ag1b2c3d4e5f6a" version="1">Amount of waste at which bowels automatically switch to lethal digestion. When waste drops below this threshold (via disposal), bowels switch back to endo. Set to 0 to disable.</content>
+
 	<content contentuid="hdbb58683gb507g4a89gaf9cg046e07357af0" version="1">Rebirth</content>
 	<content contentuid="had93fe5c851040a0a594cc2fa11a6a36694d" version="1">Rebirth (Stomach)</content>
     <content contentuid="h5ce262082f424b0d9dc6f5072c7ed1c187g7" version="1">Rebirth (Ass)</content>

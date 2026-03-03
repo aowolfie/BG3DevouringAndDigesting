@@ -85,6 +85,7 @@ ComplexCustomSpells = false
 ---@field SpellTargets table<CHARACTER, string> table of prey this character has cast a vore-related spell on. Used for multi-stage spells
 ---@field SwallowedStatus string what swallowed status is appled (prey only)
 ---@field DigestionStatus string what digestion status is appled (prey only)
+---@field Waste integer accumulated waste from fully digested prey (pred only)
 VoreDataEntry = {
     Pred = "",
     Weight = 0,
@@ -106,4 +107,5 @@ VoreDataEntry = {
     SpellTargets = {},
     SwallowedStatus = "",
     DigestionStatus = "",
+    Waste = 0,
 }

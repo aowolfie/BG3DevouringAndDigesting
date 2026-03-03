@@ -23,7 +23,7 @@ function SP_VoreDataEntry(character, create)
         SP_NewVoreDataEntry(character)
     elseif VoreData[character].Pred == "" and next(VoreData[character].Prey) == nil and VoreData[character].Items == ""
         and VoreData[character].Fat == 0 and VoreData[character].AddWeight == 0 and VoreData[character].Satiation == 0 and
-        next(VoreData[character].SpellTargets) == nil and not create then
+        next(VoreData[character].SpellTargets) == nil and VoreData[character].Waste == 0 and not create then
         _P("Removing character " .. character)
         VoreData[character] = nil
     end
@@ -1068,6 +1068,7 @@ function SP_SlowDigestion(weightDiff, fatDiff)
     end
 
     -- reduces prey weight
+    local slowAutoAbsorb = {}
     for k, v in pairs(VoreData) do
         local thisDiff = weightDiff
         if SP_MCMGet("BoilingInsidesFast") and Osi.HasPassive(v.Pred, "SP_BoilingInsides") == 1 and v.Digestion ~= DType.Endo then
@@ -1102,12 +1103,25 @@ function SP_SlowDigestion(weightDiff, fatDiff)
                     thisDiff * SP_MCMGet("HungerSatiationRate") / 100
             end
             SP_ReduceWeightRecursive(k, thisDiff, false, true)
+
+            -- Passive auto-absorb: if prey weight has reached minimum, queue for absorption
+            if v.Weight <= v.FixedWeight // 5 and v.Pred ~= "" then
+                table.insert(slowAutoAbsorb, {pred = v.Pred, prey = k})
+            end
         -- if prey is endoed and pred has soothing stomach, add satiation
         elseif v.Digestion == DType.Endo then
             if SP_MCMGet("Hunger") and Osi.IsPartyMember(v.Pred, 0) == 1 and Osi.HasPassive(v.Pred, "SP_SoothingStomach") == 1 then
                 VoreData[v.Pred].Satiation = VoreData[v.Pred].Satiation +
                     weightDiff * SP_MCMGet("HungerSatiationRate") / 100
             end
+        end
+    end
+    -- Process auto-absorb after the loop
+    for _, entry in ipairs(slowAutoAbsorb) do
+        if VoreData[entry.prey] ~= nil and VoreData[entry.pred] ~= nil then
+            SP_DelayCallTicks(3, function()
+                SP_AutoAbsorbPrey(entry.pred, entry.prey)
+            end)
         end
     end
 end
@@ -1202,6 +1216,7 @@ function SP_FastDigestion(pred, allPrey, force)
     if Osi.HasPassive(pred, "SP_BoilingInsides") == 1 then
         force = force * 2
     end
+    local autoAbsorbList = {}
     for prey, locus in pairs(allPrey) do
         if VoreData[prey] ~= nil then
             local preyWeightDiff = 0
@@ -1238,9 +1253,99 @@ function SP_FastDigestion(pred, allPrey, force)
                 end
                 -- remembers all characters whose weight we need to update
                 SP_ReduceWeightRecursive(prey, preyWeightDiff, false, true)
+
+                -- Passive auto-absorb: if prey weight has reached minimum, queue for absorption
+                if VoreData[prey] ~= nil and VoreData[prey].Weight <= VoreData[prey].FixedWeight // 5 then
+                    table.insert(autoAbsorbList, prey)
+                end
             end
         end
     end
+    -- Process auto-absorb after the loop to avoid modifying the table during iteration
+    for _, prey in ipairs(autoAbsorbList) do
+        if VoreData[prey] ~= nil and VoreData[pred] ~= nil then
+            SP_DelayCallTicks(3, function()
+                SP_AutoAbsorbPrey(pred, prey)
+            end)
+        end
+    end
+end
+
+---Passively absorbs a fully digested prey. Adds waste to pred and removes prey.
+---@param pred CHARACTER
+---@param prey CHARACTER
+function SP_AutoAbsorbPrey(pred, prey)
+    if VoreData[pred] == nil or VoreData[prey] == nil then
+        return
+    end
+    _P("Auto-absorbing " .. prey .. " from " .. pred)
+
+    local wasteAmount = math.max(1, VoreData[prey].FixedWeight // 10)
+    VoreData[pred].Waste = VoreData[pred].Waste + wasteAmount
+    _P("Added " .. wasteAmount .. " waste to " .. pred .. " (total: " .. VoreData[pred].Waste .. ")")
+
+    -- Use the existing absorb path to clean up the prey
+    SP_RegurgitatePrey(pred, prey, 1, "Absorb", VoreData[prey].Locus)
+
+    -- Check if bowels should auto-flip to lethal based on waste threshold
+    SP_CheckWasteThreshold(pred)
+end
+
+---Checks if pred's waste exceeds the bowels lethal threshold and updates digestion accordingly.
+---@param pred CHARACTER
+function SP_CheckWasteThreshold(pred)
+    if VoreData[pred] == nil then
+        return
+    end
+    local threshold = SP_MCMGet("WasteThreshold")
+    if threshold > 0 and VoreData[pred].Waste >= threshold then
+        if Osi.HasActiveStatus(pred, "SP_LocusLethal_A") ~= 1 then
+            _P("Waste threshold reached, auto-flipping bowels to lethal")
+            SP_SetLocusDigestion(pred, "A", true)
+        end
+    elseif threshold > 0 and VoreData[pred].Waste < threshold then
+        if Osi.HasActiveStatus(pred, "SP_LocusLethal_A") == 1 then
+            _P("Waste below threshold, auto-flipping bowels to endo")
+            SP_SetLocusDigestion(pred, "A", false)
+        end
+    end
+end
+
+---Disposes waste from the pred, spawning disposal piles and reducing weight.
+---@param pred CHARACTER
+function SP_DisposeWaste(pred)
+    if VoreData[pred] == nil or VoreData[pred].Waste <= 0 then
+        return
+    end
+
+    local wasteAmount = VoreData[pred].Waste
+    _P("Disposing " .. wasteAmount .. " waste from " .. pred)
+
+    -- Spawn disposal piles behind the pred (bowels disposal)
+    local predX, predY, predZ = Osi.GetPosition(pred)
+    local predXRotation, predYRotation, predZRotation = Osi.GetRotation(pred)
+    -- Place pile behind the pred (180 degrees from facing)
+    predYRotation = (predYRotation + 180) * math.pi / 180
+    local pileX = predX + SP_MCMGet("RegurgitationDistance") * math.cos(predYRotation)
+    local pileZ = predZ + SP_MCMGet("RegurgitationDistance") * math.sin(predYRotation)
+    -- Scale quantity: 1 pile per 25 kg of waste, minimum 1
+    local pileCount = math.max(1, wasteAmount // 25)
+    for i = 1, pileCount do
+        Osi.CreateAt('d15b0a7e-3c2f-4e8a-9d6b-1a2f3e4d5c6b', pileX, predY, pileZ, 1, 0, "")
+    end
+    _P("Spawned " .. pileCount .. " disposal pile(s) for waste " .. wasteAmount)
+
+    -- Reduce pred's AddWeight by the waste amount
+    VoreData[pred].AddWeight = math.max(0, VoreData[pred].AddWeight - wasteAmount)
+    SP_ReduceWeightRecursive(pred, wasteAmount, true, false)
+
+    -- Clear waste
+    VoreData[pred].Waste = 0
+
+    -- Check if bowels should flip back to endo
+    SP_CheckWasteThreshold(pred)
+
+    SP_VoreDataEntry(pred, false)
 end
 
 ---Returns character weight + their inventory weight.
