@@ -124,8 +124,60 @@ function SP_OnSpellCast(caster, spell, spellType, spellElement, storyActionID)
             end
         elseif spellName == "DisposeWaste" then
             SP_DisposeWaste(caster)
+        elseif spellName == "ViewContents" then
+            SP_ViewOrganContents(caster)
         end
     end
+end
+
+---Builds and displays a message showing what's inside each organ of a pred.
+---@param pred CHARACTER
+function SP_ViewOrganContents(pred)
+    if VoreData[pred] == nil or next(VoreData[pred].Prey) == nil then
+        Osi.OpenMessageBox(pred, "Nothing inside.")
+        return
+    end
+
+    local locusNames = {
+        ["O"] = "Stomach",
+        ["A"] = "Bowels",
+        ["U"] = "Womb",
+        ["C"] = "Balls"
+    }
+
+    local locusContents = {}
+    for _, locusKey in ipairs({"O", "A", "U", "C"}) do
+        locusContents[locusKey] = {}
+    end
+
+    for prey, locus in pairs(VoreData[pred].Prey) do
+        local name = SP_GetDisplayNameFromGUID(prey)
+        local state = ""
+        if VoreData[prey] ~= nil then
+            if VoreData[prey].Digestion == DType.Dead then
+                state = " (dead)"
+            elseif VoreData[prey].Digestion == DType.Lethal then
+                state = " (digesting)"
+            end
+        end
+        if locusContents[locus] ~= nil then
+            table.insert(locusContents[locus], name .. state)
+        end
+    end
+
+    local parts = {}
+    for _, locusKey in ipairs({"O", "A", "U", "C"}) do
+        local contents = locusContents[locusKey]
+        if #contents > 0 then
+            table.insert(parts, locusNames[locusKey] .. ": " .. table.concat(contents, ", "))
+        end
+    end
+
+    local message = table.concat(parts, "\n")
+    if message == "" then
+        message = "Nothing inside."
+    end
+    Osi.OpenMessageBox(pred, message)
 end
 
 
@@ -261,11 +313,13 @@ function SP_OnSpellCastTarget(caster, target, spell, spellType, spellElement, st
                 end
             end
         elseif spellName == 'Churn' then
+            -- Support locus suffix: SP_Target_Churn_U, SP_Target_Churn_C, default to O
+            local churnLocus = spellParams[4]
+            if not churnLocus or not EnumLoci[churnLocus] then churnLocus = 'O' end
             if VoreData[target] ~= nil then
                 local fullDigestThese = {}
                 for k, v in pairs(VoreData[target].Prey) do
-                    -- Churn only affects stomach (O) prey
-                    if v == 'O' then
+                    if v == churnLocus then
                         if VoreData[k].Digestion == DType.Lethal then
                             Osi.ApplyStatus(k, 'SP_ChurnStatus' , 0, 1, target)
                         elseif VoreData[k].Digestion == DType.Dead then
@@ -278,11 +332,13 @@ function SP_OnSpellCastTarget(caster, target, spell, spellType, spellElement, st
                 end
             end
         elseif spellName == 'Clench' then
+            -- Support locus suffix: SP_Target_Clench_U, SP_Target_Clench_C, default to A
+            local clenchLocus = spellParams[4]
+            if not clenchLocus or not EnumLoci[clenchLocus] then clenchLocus = 'A' end
             if VoreData[target] ~= nil then
                 local fullDigestThese = {}
                 for k, v in pairs(VoreData[target].Prey) do
-                    -- Clench only affects bowels (A) prey
-                    if v == 'A' then
+                    if v == clenchLocus then
                         if VoreData[k].Digestion == DType.Lethal then
                             Osi.ApplyStatus(k, 'SP_ClenchStatus' , 0, 1, target)
                         elseif VoreData[k].Digestion == DType.Dead then

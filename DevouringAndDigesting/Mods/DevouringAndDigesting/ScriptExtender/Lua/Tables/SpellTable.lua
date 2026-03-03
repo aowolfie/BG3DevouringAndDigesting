@@ -152,7 +152,11 @@ local SpellTable = {
         "SP_Target_PowerWordSwallow",
         "SP_Target_StillPrey_All",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
     bardMS9 = {
         "SP_Target_Compress",
@@ -172,7 +176,11 @@ local SpellTable = {
         "SP_Target_PowerWordSwallow",
         "SP_Target_StillPrey_All",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
 
     -- cleric
@@ -205,7 +213,11 @@ local SpellTable = {
     },
     cleric6 = {
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
     cleric7 = {
     },
@@ -241,7 +253,11 @@ local SpellTable = {
     },
     druid6 = {
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
     druid7 = {
     },
@@ -443,7 +459,11 @@ local SpellTable = {
         "SP_Zone_SuperBelch",
         "SP_Target_PowerWordSwallow",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
     sorcerer7 = {
         "SP_Target_Compress",
@@ -455,7 +475,11 @@ local SpellTable = {
         "SP_Zone_SuperBelch",
         "SP_Target_PowerWordSwallow",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
     sorcerer8 = {
         "SP_Target_Compress",
@@ -467,7 +491,11 @@ local SpellTable = {
         "SP_Zone_SuperBelch",
         "SP_Target_PowerWordSwallow",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
     sorcerer9 = {
         "SP_Target_Compress",
@@ -479,7 +507,11 @@ local SpellTable = {
         "SP_Zone_SuperBelch",
         "SP_Target_PowerWordSwallow",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
 
     -- warlock
@@ -561,7 +593,11 @@ local SpellTable = {
         "SP_Target_PowerWordSwallow",
         "SP_Target_StillPrey_All",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
     warlock7 = {
         "SP_Target_Compress",
@@ -580,7 +616,11 @@ local SpellTable = {
         "SP_Target_PowerWordSwallow",
         "SP_Target_StillPrey_All",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
     warlock8 = {
         "SP_Target_Compress",
@@ -599,7 +639,11 @@ local SpellTable = {
         "SP_Target_PowerWordSwallow",
         "SP_Target_StillPrey_All",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
     warlock9 = {
         "SP_Target_Compress",
@@ -618,7 +662,11 @@ local SpellTable = {
         "SP_Target_PowerWordSwallow",
         "SP_Target_StillPrey_All",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
 
     -- wizard
@@ -697,7 +745,11 @@ local SpellTable = {
         "SP_Target_PowerWordSwallow",
         "SP_Target_StillPrey_All",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
     wizard7 = {
         "SP_Target_Compress",
@@ -715,7 +767,11 @@ local SpellTable = {
         "SP_Target_PowerWordSwallow",
         "SP_Target_StillPrey_All",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
     wizard8 = {
         "SP_Target_Compress",
@@ -733,7 +789,11 @@ local SpellTable = {
         "SP_Target_PowerWordSwallow",
         "SP_Target_StillPrey_All",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     },
     wizard9 = {
         "SP_Target_Compress",
@@ -751,7 +811,11 @@ local SpellTable = {
         "SP_Target_PowerWordSwallow",
         "SP_Target_StillPrey_All",
         "SP_Target_Churn",
-        "SP_Target_Clench"
+        "SP_Target_Clench",
+        "SP_Target_Churn_U",
+        "SP_Target_Churn_C",
+        "SP_Target_Clench_U",
+        "SP_Target_Clench_C"
     }
 }
 
