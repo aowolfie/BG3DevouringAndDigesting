@@ -721,4 +721,10 @@
     <content contentuid="h39b3be56481041ceb550362ae42cc3e9dg3c" version="1">Move Prey (Bowels to Stomach)</content>
     <content contentuid="hf47e6963a43c440eb5a1e83d2c80af293bfd" version="1">Potion of Rest</content>
     <content contentuid="h32127c41138d493dab4a3dc437512905ac77" version="1">Use this to start a Long Rest while a player character is devoured. A confirmation window will appear on screen. You must click 'yes' within a couple of seconds, or the potion will not work.</content>
+    <!-- disposal pile -->
+    <content contentuid="hd15b0a7eg3c2fg4e8ag9d6bg1a2f3e4d5c6b" version="1">Disposal Pile</content>
+    <content contentuid="h6a8f2d1eg5b3cg4f7ag8e9dg2c1b4a5f6e3d" version="1">The remains of a fully digested creature. Not much left to identify.</content>
+    <!-- disposal pile MCM -->
+    <content contentuid="h3a9f7c2eg1d4bg4e5fg6a8bg7c9d0e1f2a3b" version="1">Disposal Pile</content>
+    <content contentuid="h4b0a8d3fg2e5cg4f6ag7b9cg8d0e1f2a3b4c" version="1">When absorbing a fully digested prey, a disposal pile is spawned behind the pred. The number of piles scales with the prey's original weight (1 per 25 kg).</content>
 </contentList>

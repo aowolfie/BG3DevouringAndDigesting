@@ -665,6 +665,25 @@ function SP_RegurgitatePrey(pred, preyString, preyState, spell, locus)
                 end
             end
             Osi.TeleportToPosition(prey, 100000, 0, 100000, "", 0, 0, 0, 1, 1)
+
+            -- Spawn disposal pile based on prey's original weight
+            if SP_MCMGet("DisposalPile") then
+                local pileWeight = VoreData[prey].FixedWeight
+                if pileWeight > 0 then
+                    local predX, predY, predZ = Osi.GetPosition(pred)
+                    local predXRotation, predYRotation, predZRotation = Osi.GetRotation(pred)
+                    -- Place pile behind the pred
+                    predYRotation = (predYRotation + 180) * math.pi / 180
+                    local pileX = predX + SP_MCMGet("RegurgitationDistance") * math.cos(predYRotation)
+                    local pileZ = predZ + SP_MCMGet("RegurgitationDistance") * math.sin(predYRotation)
+                    -- Scale quantity: 1 pile per 25 kg of original prey weight, minimum 1
+                    local pileCount = math.max(1, pileWeight // 25)
+                    for i = 1, pileCount do
+                        Osi.CreateAt('d15b0a7e-3c2f-4e8a-9d6b-1a2f3e4d5c6b', pileX, predY, pileZ, 1, 0, "")
+                    end
+                    _P("Spawned " .. pileCount .. " disposal pile(s) for prey weight " .. pileWeight)
+                end
+            end
         else
             local predX, predY, predZ = Osi.GetPosition(pred)
             local predXRotation, predYRotation, predZRotation = Osi.GetRotation(pred)

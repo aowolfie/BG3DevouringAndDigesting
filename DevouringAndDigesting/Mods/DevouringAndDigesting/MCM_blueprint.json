@@ -86,6 +86,14 @@
                     "Description": "If true, you lose weight immediately upon finishing digestion, and you will be immediately able to absorb / dispose of prey",
                     "Type": "checkbox",
                     "Handles": {"NameHandle":"h28d75044g9810g476egad69g5765d4664965","DescriptionHandle":"he064dd60g18f4g45e6ga6edg27180c74d21b"}
+                },
+                {
+                    "Id": "DisposalPile",
+                    "Name": "Disposal Pile",
+                    "Default": false,
+                    "Description": "When absorbing a fully digested prey, a disposal pile is spawned behind the pred. The number of piles scales with the prey's original weight (1 per 25 kg).",
+                    "Type": "checkbox",
+                    "Handles": {"NameHandle":"h3a9f7c2eg1d4bg4e5fg6a8bg7c9d0e1f2a3b","DescriptionHandle":"h4b0a8d3fg2e5cg4f6ag7b9cg8d0e1f2a3b4c"}
                 }
             ],
             "VisibleIf": {
